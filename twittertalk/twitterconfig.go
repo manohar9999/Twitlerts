@@ -1,25 +1,25 @@
 package twittertalk
 
 import (
-	"net/http"
-	"fmt"
-	"net/url"
 	"bytes"
-	"log"
-	"strconv"
-	"io/ioutil"
-	"encoding/json"
 	"encoding/base64"
-	"strings"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 )
-
-const RateLimit = "https://api.twitter.com/1.1/application/rate_limit_status.json"
-const UserTimeline = "https://api.twitter.com/1.1/statuses/user_timeline.json"
 
 type TwitterConfig struct{
 	ConsumerKey string
 	ConsumerSecret string
 }
+
+const RateLimit = "https://api.twitter.com/1.1/application/rate_limit_status.json"
+const UserTimeline = "https://api.twitter.com/1.1/statuses/user_timeline.json"
 
 type BearerToken struct {
 	AccessToken string `json:"access_token"`
@@ -39,7 +39,11 @@ type OAuth2Response struct {
 }
 
 // Ref: https://developer.twitter.com/en/docs/basics/authentication/overview/application-only.html
-func OAuth2Authenticate(config TwitterConfig) BearerToken {
+// param in:
+//	config TwitterConfig - config object which contains key and secret
+// param out:
+//	BearerToken - returns the token required to authenticate the requests
+func oauth2Authenticate(config TwitterConfig) BearerToken {
 	client := &http.Client{}
 	// Encode consumer key and secret
 	encodedKeySecret := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
@@ -79,41 +83,22 @@ func OAuth2Authenticate(config TwitterConfig) BearerToken {
 	return b
 }
 
-// Returns a list of OAuth2Response response objects
-func GetTweets(b BearerToken, screenname string, tweetcount int, includeentities bool) []OAuth2Response {
-	client := &http.Client{}
-
-	// Choose your API endpoint that supports application only auth context
-	// and create a request object with that
-	// Ref: https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
-	twitterEndPoint := fmt.Sprintf("%s?screen_name=%s&count=%d&include_entities=%t&tweet_mode=extended",UserTimeline,screenname,tweetcount,includeentities)
-	req, err := http.NewRequest("GET", twitterEndPoint, nil)
+// exposed method that handles the auth flow
+//	param in: config file name which contains key and secret
+//		in json format
+//	param out: returns the token required to authenticate the requests
+func Oauth2Setup(filename string) BearerToken {
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
-	// Authenticate API requests with the bearer token
-	// include an Authorization header formatted as
-	// Bearer
-	req.Header.Add("Authorization",
-		fmt.Sprintf("Bearer %s", b.AccessToken))
+	decoder := json.NewDecoder(file)
+	twitterconfig := TwitterConfig{}
+	// reads the json and stores it in TwitterConfig.
+	decoder.Decode(&twitterconfig)
+	bearerToken := oauth2Authenticate(TwitterConfig{twitterconfig.ConsumerKey, twitterconfig.ConsumerSecret})
 
-	// Issue the request and get the JSON API response
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err, resp)
-	}
-	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	returnCode, _ := strconv.Atoi(strings.Split(resp.Status, " ")[0])
-	if returnCode == http.StatusOK {
-		oauth2resp := make([]OAuth2Response,0)
-		json.Unmarshal(respBody, &oauth2resp)
-		return oauth2resp
-	}
-
-	return nil
+	return bearerToken
 }

@@ -1,31 +1,16 @@
 package main
 
 import (
-	"github.com/manohar9999/Twitlerts/twittertalk"
-	"os"
-	"encoding/json"
-	"log"
 	"fmt"
+	"github.com/manohar9999/Twitlerts/twittertalk"
 )
 
 func main() {
-
-	file, err  := os.Open("config.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	twitterconfig := twittertalk.TwitterConfig{}
-	// Reads the json and stores it in TwitterConfig.
-	decoder.Decode(&twitterconfig)
-
-	bearerToken := twittertalk.OAuth2Authenticate(twittertalk.TwitterConfig{twitterconfig.ConsumerKey,twitterconfig.ConsumerSecret})
-	tweets := twittertalk.GetTweets(bearerToken,"tim_cook", 10,true)
-	if tweets != nil {
-		for _, tweet := range tweets {
-			fmt.Println(tweet.ID, tweet.FullText)
-		}
+	bearerToken := twittertalk.Oauth2Setup("config.json")
+	var channel = make(chan twittertalk.OAuth2Response)
+	go twittertalk.GetAllTweets("tim_cook", channel, bearerToken)
+	for i := range channel {
+		// for now, just printing them. I know.. I know..
+		fmt.Println(i.FullText)
 	}
 }
