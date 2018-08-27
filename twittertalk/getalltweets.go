@@ -76,7 +76,7 @@ func ProcessTweets(tweets []OAuth2Response, ch chan OAuth2Response)  {
 //	btoken BearerToken - This is required to authenticate
 //	screenname string - Twitter user screen name
 //	tweetcount int - Number of tweets to retrieve
-//  includeentities bool - includes hashtags, user mentions, links,
+// 	includeentities bool - includes hashtags, user mentions, links,
 // 		stock tickers (symbols), Twitter polls, and attached media
 //		This is helpful preprocessed information
 //	sinceid int64 - Returns newer results with an ID greater than sinceid
@@ -88,7 +88,7 @@ func ProcessTweets(tweets []OAuth2Response, ch chan OAuth2Response)  {
 func GetTweets(token BearerToken, screenname string, tweetcount int, includeentities bool, sinceid int64, maxid int64) []OAuth2Response {
 	client := &http.Client{}
 
-	// Choose your API endpoint that supports application only auth context
+	// choose your API endpoint that supports application only auth context
 	// and create a request object with that
 	// Ref: https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
 	var twitterEndPoint string
