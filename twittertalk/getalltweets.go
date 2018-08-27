@@ -37,7 +37,7 @@ func GetAllTweets(screenname string, ch chan OAuth2Response, token BearerToken) 
 		lastid = tweets[len(tweets)-1].ID
 	}
 
-	// Process them
+	// process them
 	ProcessTweets(tweets, ch)
 
 	var firstpass bool = true
@@ -52,9 +52,6 @@ func GetAllTweets(screenname string, ch chan OAuth2Response, token BearerToken) 
 		if len(oldertweets) > 1 {
 			// process older tweets
 			ProcessTweets(oldertweets, ch)
-			//for _, tweet := range oldertweets {
-			//	ch <- tweet
-			//}
 		} else {
 			// no older tweets
 			// break out of for loop
@@ -68,14 +65,14 @@ func GetAllTweets(screenname string, ch chan OAuth2Response, token BearerToken) 
 	}
 }
 
-// pushing the response objects onto the channel
+// Pushing the response objects onto the channel
 func ProcessTweets(tweets []OAuth2Response, ch chan OAuth2Response)  {
 	for _, tweet := range tweets {
 		ch <- tweet
 	}
 }
 
-// param in:
+// Param in:
 //	btoken BearerToken - This is required to authenticate
 //	screenname string - Twitter user screen name
 //	tweetcount int - Number of tweets to retrieve
@@ -109,13 +106,13 @@ func GetTweets(token BearerToken, screenname string, tweetcount int, includeenti
 		log.Fatal(err)
 	}
 
-	// Authenticate API requests with the bearer token
+	// authenticate API requests with the bearer token
 	// include an Authorization header formatted as
 	// Bearer
 	req.Header.Add("Authorization",
 		fmt.Sprintf("Bearer %s", token.AccessToken))
 
-	// Issue the request and get the JSON API response
+	// issue the request and get the JSON API response
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err, resp)
